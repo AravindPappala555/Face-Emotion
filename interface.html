@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Expression Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #fff;
+        }
+
+        .video-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1; /* Ensures the video is behind the content */
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .emotion-bar {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .emotion-label {
+            width: 100px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .emotion-count {
+            width: 30px;
+            text-align: right;
+        }
+
+        .bar {
+            height: 20px;
+            background-color: #4CAF50;
+            margin-left: 10px;
+        }
+    </style>
+    <script>
+        const emotionColors = {
+            'angry': '#FF5733',
+            'disgust': '#C70039',
+            'fear': '#900C3F',
+            'happy': '#FFC300',
+            'sad': '#3498DB',
+            'surprise': '#8E44AD',
+            'neutral': '#2ECC71'
+        };
+
+        async function fetchCounts() {
+            const response = await fetch('/people_count');
+            const data = await response.json();
+            document.getElementById('people-count').innerText = `People Count: ${data.people_count}`;
+
+            const responseEmotions = await fetch('/emotion_counts');
+            const emotionData = await responseEmotions.json();
+            updateEmotionBars(emotionData);
+        }
+
+        function updateEmotionBars(emotionData) {
+            const emotionContainer = document.getElementById('emotion-container');
+            emotionContainer.innerHTML = '';
+            for (const [emotion, count] of Object.entries(emotionData)) {
+                const barContainer = document.createElement('div');
+                barContainer.className = 'emotion-bar';
+
+                const label = document.createElement('div');
+                label.className = 'emotion-label';
+                label.innerText = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+
+                const countLabel = document.createElement('div');
+                countLabel.className = 'emotion-count';
+                countLabel.innerText = count;
+
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.width = `${count * 20}px`;
+                bar.style.backgroundColor = emotionColors[emotion];
+
+                barContainer.appendChild(label);
+                barContainer.appendChild(countLabel);
+                barContainer.appendChild(bar);
+
+                emotionContainer.appendChild(barContainer);
+            }
+        }
+
+        setInterval(fetchCounts, 1000);
+    </script>
+</head>
+<body>
+    <!-- Video background -->
+    <video autoplay muted loop class="video-background">
+        <source src="back.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Content over the video -->
+    <div class="content">
+        <h1>Facial Expression Analysis</h1>
+        <div>
+            <button onclick="fetch('/start_camera')">Start Camera</button>
+            <button onclick="fetch('/stop_camera')">Stop Camera</button>
+        </div>
+        <div id="people-count">People Count: 0</div>
+        <div id="emotion-container"></div>
+    </div>
+</body>
+</html>
